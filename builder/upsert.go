@@ -117,7 +117,7 @@ func (qb QueryBuilder) UpsertSQL(models interface{}) (sql string, args []interfa
 	case reflect.Array:
 	case reflect.Slice:
 	case reflect.Struct:
-		log.Println("ok", rt.Kind())
+		// log.Println("ok", rt.Kind())
 	default:
 		return "", nil, fmt.Errorf("%s is not supported", rt.Kind())
 	}
