@@ -158,34 +158,6 @@ func (qb QueryBuilder) UpsertSQL(models interface{}) (sql string, args []interfa
 	return sql, args, nil
 }
 
-// func GetValueFunc(models interface{}) func(interface{}) ([]string, []interface{}) {
-
-// 	if reflect.TypeOf(models).Kind() == reflect.Struct {
-// 		return
-// 	}
-
-// 	// TODO
-// 	// return GetSliceValuesWithValidation
-// 	return GetSliceValues
-// }
-
-// func OnDuplicateError(primaryKeyIndex []int) func(reflect.Value, int) bool {
-// 	duplicate := make(map[string]bool)
-// 	return func(o reflect.Value, index int) bool {
-// 		// value.
-// 		valueField := o.Field(index)
-// 		value := valueField.Interface()
-// 		// value := valueField.Interface()
-
-// 		// pks
-// 		if Contains(index, primaryKeyIndex) {
-// 			pks = append(pks, fmt.Sprintf("%s", value))
-// 		}
-
-// 		return false
-// 	}
-// }
-
 func (qb QueryBuilder) getStructValues(model interface{}) (values []string, args []interface{}, err error) {
 	t := reflect.TypeOf(model)
 	o := reflect.ValueOf(model)
