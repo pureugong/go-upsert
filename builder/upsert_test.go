@@ -52,29 +52,36 @@ func TestQueryBuilderOneUpsertSQL(t *testing.T) {
 	type Person struct {
 		ID   string `db:"id,primary"`
 		Name string `db:"name"`
+		Age  *int   `db:"age"`
 	}
 	builder := NewQueryBuilder(Person{})
 	tests := []struct {
-		model    Person
-		expected string
+		model        Person
+		expected     string
+		expectedArgs []interface{}
 	}{
 		{
 			model: Person{
 				ID: "1001", Name: "Tom",
 			},
-			expected: `INSERT INTO person (id, name) VALUES (?, ?)
-ON CONFLICT (id) DO UPDATE SET name = excluded.name`,
+			expected: `INSERT INTO person (id, name, age) VALUES (?, ?, ?)
+ON CONFLICT (id) DO UPDATE SET name = excluded.name, age = excluded.age`,
+			expectedArgs: []interface{}{"1001", "Tom", nil},
 		},
 	}
 
 	for _, test := range tests {
-		sql, _, err := builder.UpsertSQL(test.model)
+		sql, args, err := builder.UpsertSQL(test.model)
 		if err != nil {
 			t.Error(err)
 		}
 		if sql != test.expected {
 			t.Error(sql)
 			t.Error(test.expected)
+		}
+		if !reflect.DeepEqual(args, test.expectedArgs) {
+			t.Error(args)
+			t.Error(test.expectedArgs)
 		}
 	}
 }

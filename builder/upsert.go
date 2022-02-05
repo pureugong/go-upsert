@@ -154,10 +154,7 @@ func (qb QueryBuilder) UpsertSQL(models interface{}) (sql string, args []interfa
 
 	}
 
-	sql = sql + strings.Join(
-		values,
-		`,
-	`)
+	sql = sql + strings.Join(values, `,`)
 	return sql, args, nil
 }
 
@@ -196,6 +193,9 @@ func (qb QueryBuilder) getStructValues(model interface{}) (values []string, args
 	for i := 0; i < t.NumField(); i++ {
 		valueField := o.Field(i)
 		value := valueField.Interface()
+		if valueField.Kind() == reflect.Ptr && valueField.IsNil() {
+			value = nil
+		}
 		vv = append(vv, "?")
 		args = append(args, value)
 	}
@@ -218,6 +218,9 @@ func (qb QueryBuilder) getSliceValues(models interface{}) (values []string, args
 		for j := 0; j < t.NumField(); j++ {
 			valueField := o.Field(j)
 			value := valueField.Interface()
+			if valueField.Kind() == reflect.Ptr && valueField.IsNil() {
+				value = nil
+			}
 			vv = append(vv, "?")
 			aargs = append(aargs, value)
 			if Contains(j, qb.primaryKeyIndex) {
@@ -238,37 +241,6 @@ func (qb QueryBuilder) getSliceValues(models interface{}) (values []string, args
 		args = append(args, aargs...)
 	}
 	return values, args, nil
-}
-
-func GetSliceValues(models interface{}) (values []string, args []interface{}) {
-	s := reflect.ValueOf(models)
-	t := s.Index(0).Type()
-	for i := 0; i < s.Len(); i++ {
-		o := reflect.ValueOf(s.Index(i).Interface())
-		vv := make([]string, 0)
-		for j := 0; j < t.NumField(); j++ {
-			valueField := o.Field(j)
-			value := valueField.Interface()
-			vv = append(vv, "?")
-			args = append(args, value)
-		}
-		values = append(values, fmt.Sprintf("(%s)", strings.Join(vv, ", ")))
-	}
-	return values, args
-}
-
-func GetStructValues(model interface{}) (values []string, args []interface{}) {
-	t := reflect.TypeOf(model)
-	o := reflect.ValueOf(model)
-	vv := make([]string, 0)
-	for i := 0; i < t.NumField(); i++ {
-		valueField := o.Field(i)
-		value := valueField.Interface()
-		vv = append(vv, "?")
-		args = append(args, value)
-	}
-	values = append(values, fmt.Sprintf("(%s)", strings.Join(vv, ", ")))
-	return values, args
 }
 
 func Contains(v int, list []int) bool {
