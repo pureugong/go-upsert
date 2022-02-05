@@ -189,12 +189,6 @@ func (qb QueryBuilder) UpsertSQL(models interface{}) (sql string, args []interfa
 // 	}
 // }
 
-func OnDuplicateSkip() error {
-	// duplicate := make(map[string]bool)
-
-	return nil
-}
-
 func (qb QueryBuilder) getStructValues(model interface{}) (values []string, args []interface{}, err error) {
 	t := reflect.TypeOf(model)
 	o := reflect.ValueOf(model)
@@ -219,31 +213,23 @@ func (qb QueryBuilder) getSliceValues(models interface{}) (values []string, args
 		o := reflect.ValueOf(s.Index(i).Interface())
 		vv := make([]string, 0)
 		aargs := make([]interface{}, 0)
-
-		// pks
 		pks := make([]string, 0)
-		for j := 0; j < t.NumField(); j++ {
 
+		for j := 0; j < t.NumField(); j++ {
 			valueField := o.Field(j)
 			value := valueField.Interface()
-
-			// pks
+			vv = append(vv, "?")
+			aargs = append(aargs, value)
 			if Contains(j, qb.primaryKeyIndex) {
 				pks = append(pks, fmt.Sprintf("%s", value))
 			}
-
-			vv = append(vv, "?")
-			aargs = append(aargs, value)
 		}
-		// pks
 		pk := strings.Join(pks, "-")
 		if found := duplicate[pk]; found {
 			if !qb.onDuplicateSkip {
-				// on duplicate error
-				return nil, nil, errors.New("duplicate")
-
+				return nil, nil, errors.New("duplicate record found")
 			}
-			log.Println("skipping", pk, aargs)
+			log.Println("duplicate record found: skipping", pk, aargs)
 			continue
 		}
 

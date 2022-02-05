@@ -29,7 +29,57 @@ func TestNewQueryBuilder(t *testing.T) {
 	}
 }
 
-func TestQueryBuilderUpsertSQL(t *testing.T) {
+func TestNewQueryBuilderOption(t *testing.T) {
+	type Person struct {
+		ID   string `db:"id,primary"`
+		Name string `db:"name"`
+	}
+	builder := NewQueryBuilder(Person{}, WithTableName("people"))
+	if !reflect.DeepEqual(builder.tableName, "people") {
+		t.Error("failed")
+	}
+	builder = NewQueryBuilder(Person{}, WithOnDuplicateError())
+	if !reflect.DeepEqual(builder.onDuplicateSkip, false) {
+		t.Error("failed")
+	}
+	builder = NewQueryBuilder(Person{}, WithOnDuplicateSkip())
+	if !reflect.DeepEqual(builder.onDuplicateSkip, true) {
+		t.Error("failed")
+	}
+}
+
+func TestQueryBuilderOneUpsertSQL(t *testing.T) {
+	type Person struct {
+		ID   string `db:"id,primary"`
+		Name string `db:"name"`
+	}
+	builder := NewQueryBuilder(Person{})
+	tests := []struct {
+		model    Person
+		expected string
+	}{
+		{
+			model: Person{
+				ID: "1001", Name: "Tom",
+			},
+			expected: `INSERT INTO person (id, name) VALUES (?, ?)
+ON CONFLICT (id) DO UPDATE SET name = excluded.name`,
+		},
+	}
+
+	for _, test := range tests {
+		sql, _, err := builder.UpsertSQL(test.model)
+		if err != nil {
+			t.Error(err)
+		}
+		if sql != test.expected {
+			t.Error(sql)
+			t.Error(test.expected)
+		}
+	}
+}
+
+func TestQueryBuilderSliceUpsertSQL(t *testing.T) {
 	type Person struct {
 		ID   string `db:"id,primary"`
 		Name string `db:"name"`
@@ -71,7 +121,6 @@ ON CONFLICT (id) DO UPDATE SET name = excluded.name`,
 			t.Error(test.expected)
 		}
 	}
-
 }
 
 func TestQueryBuilderUpsertSQLDuplicateSkip(t *testing.T) {
